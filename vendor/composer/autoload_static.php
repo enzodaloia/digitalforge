@@ -92,6 +92,11 @@ class ComposerStaticInit1e75489ef8c2538d4d8939d02fa666dd
         array (
             'Monolog\\' => 8,
         ),
+        'K' => 
+        array (
+            'Knp\\Menu\\' => 9,
+            'Knp\\Bundle\\MenuBundle\\' => 22,
+        ),
         'D' => 
         array (
             'Doctrine\\SqlFormatter\\' => 22,
@@ -356,6 +361,14 @@ class ComposerStaticInit1e75489ef8c2538d4d8939d02fa666dd
         'Monolog\\' => 
         array (
             0 => __DIR__ . '/..' . '/monolog/monolog/src/Monolog',
+        ),
+        'Knp\\Menu\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/knplabs/knp-menu/src/Knp/Menu',
+        ),
+        'Knp\\Bundle\\MenuBundle\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/knplabs/knp-menu-bundle/src',
         ),
         'Doctrine\\SqlFormatter\\' => 
         array (
