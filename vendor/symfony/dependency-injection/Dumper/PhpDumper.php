@@ -259,7 +259,6 @@ class PhpDumper extends Dumper
 <?php
 
 use Symfony\Component\DependencyInjection\Argument\RewindableGenerator;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Exception\RuntimeException;
 
 /*{$this->docStar}

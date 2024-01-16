@@ -21,7 +21,6 @@ use Doctrine\DBAL\Exception\TableNotFoundException;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Schema\DefaultSchemaManagerFactory;
 use Doctrine\DBAL\Schema\Schema;
-use Doctrine\DBAL\ServerVersionProvider;
 use Doctrine\DBAL\Tools\DsnParser;
 use Symfony\Component\Cache\Exception\InvalidArgumentException;
 use Symfony\Component\Cache\Marshaller\DefaultMarshaller;
@@ -389,14 +388,12 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
             return $this->serverVersion;
         }
 
-        if ($this->conn instanceof ServerVersionProvider || $this->conn instanceof ServerInfoAwareConnection) {
-            return $this->serverVersion = $this->conn->getServerVersion();
+        $conn = $this->conn->getWrappedConnection();
+        if ($conn instanceof ServerInfoAwareConnection) {
+            return $this->serverVersion = $conn->getServerVersion();
         }
 
-        // The condition should be removed once support for DBAL <3.3 is dropped
-        $conn = method_exists($this->conn, 'getNativeConnection') ? $this->conn->getNativeConnection() : $this->conn->getWrappedConnection();
-
-        return $this->serverVersion = $conn->getAttribute(\PDO::ATTR_SERVER_VERSION);
+        return $this->serverVersion = '0';
     }
 
     private function addTableToSchema(Schema $schema): void

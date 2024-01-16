@@ -36,7 +36,7 @@ final class MakeFixtures extends AbstractMaker
 
     public static function getCommandDescription(): string
     {
-        return 'Create a new class to load Doctrine fixtures';
+        return 'Creates a new class to load Doctrine fixtures';
     }
 
     public function configureCommand(Command $command, InputConfiguration $inputConf)

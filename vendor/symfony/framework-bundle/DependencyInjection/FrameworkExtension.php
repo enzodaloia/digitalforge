@@ -1867,10 +1867,6 @@ class FrameworkExtension extends Extension
             $container->removeDefinition('serializer.normalizer.mime_message');
         }
 
-        if ($container->getParameter('kernel.debug')) {
-            $container->removeDefinition('serializer.mapping.cache_class_metadata_factory');
-        }
-
         // compat with Symfony < 6.3
         if (!is_subclass_of(ProblemNormalizer::class, SerializerAwareInterface::class)) {
             $container->getDefinition('serializer.normalizer.problem')
@@ -1879,6 +1875,10 @@ class FrameworkExtension extends Extension
 
         $serializerLoaders = [];
         if (isset($config['enable_annotations']) && $config['enable_annotations']) {
+            if ($container->getParameter('kernel.debug')) {
+                $container->removeDefinition('serializer.mapping.cache_class_metadata_factory');
+            }
+
             $annotationLoader = new Definition(
                 AnnotationLoader::class,
                 [new Reference('annotation_reader', ContainerInterface::NULL_ON_INVALID_REFERENCE)]
@@ -1927,23 +1927,21 @@ class FrameworkExtension extends Extension
             $container->getDefinition('serializer.name_converter.metadata_aware')->setArgument(1, new Reference($config['name_converter']));
         }
 
-        $defaultContext = $config['default_context'] ?? [];
-
-        if ($defaultContext) {
-            $container->setParameter('serializer.default_context', $defaultContext);
-        }
-
         if (isset($config['circular_reference_handler']) && $config['circular_reference_handler']) {
             $arguments = $container->getDefinition('serializer.normalizer.object')->getArguments();
-            $context = ($arguments[6] ?? $defaultContext) + ['circular_reference_handler' => new Reference($config['circular_reference_handler'])];
+            $context = ($arguments[6] ?? []) + ['circular_reference_handler' => new Reference($config['circular_reference_handler'])];
             $container->getDefinition('serializer.normalizer.object')->setArgument(5, null);
             $container->getDefinition('serializer.normalizer.object')->setArgument(6, $context);
         }
 
         if ($config['max_depth_handler'] ?? false) {
-            $arguments = $container->getDefinition('serializer.normalizer.object')->getArguments();
-            $context = ($arguments[6] ?? $defaultContext) + ['max_depth_handler' => new Reference($config['max_depth_handler'])];
-            $container->getDefinition('serializer.normalizer.object')->setArgument(6, $context);
+            $defaultContext = $container->getDefinition('serializer.normalizer.object')->getArgument(6);
+            $defaultContext += ['max_depth_handler' => new Reference($config['max_depth_handler'])];
+            $container->getDefinition('serializer.normalizer.object')->replaceArgument(6, $defaultContext);
+        }
+
+        if (isset($config['default_context']) && $config['default_context']) {
+            $container->setParameter('serializer.default_context', $config['default_context']);
         }
     }
 
@@ -2100,16 +2098,6 @@ class FrameworkExtension extends Extension
             $container->getDefinition('messenger.transport.beanstalkd.factory')->addTag('messenger.transport_factory');
         }
 
-        if ($config['stop_worker_on_signals'] && $this->hasConsole()) {
-            $container->getDefinition('console.command.messenger_consume_messages')
-                ->replaceArgument(8, $config['stop_worker_on_signals']);
-            $container->getDefinition('console.command.messenger_failed_messages_retry')
-                ->replaceArgument(6, $config['stop_worker_on_signals']);
-        }
-
-        if ($this->hasConsole() && $container->hasDefinition('messenger.listener.stop_worker_signals_listener')) {
-            $container->getDefinition('messenger.listener.stop_worker_signals_listener')->clearTag('kernel.event_subscriber');
-        }
         if ($config['stop_worker_on_signals']) {
             $container->getDefinition('messenger.listener.stop_worker_signals_listener')->replaceArgument(0, $config['stop_worker_on_signals']);
         }
@@ -2632,7 +2620,7 @@ class FrameworkExtension extends Extension
             ];
 
             foreach ($webhookRequestParsers as $class => $service) {
-                $package = substr($service, \strlen('mailer.webhook.request_parser.'));
+                $package = substr($service, \strlen('mailer.transport_factory.'));
 
                 if (!ContainerBuilder::willBeAvailable(sprintf('symfony/%s-mailer', 'gmail' === $package ? 'google' : $package), $class, ['symfony/framework-bundle', 'symfony/mailer'])) {
                     $container->removeDefinition($service);
@@ -2811,9 +2799,7 @@ class FrameworkExtension extends Extension
 
         if (ContainerBuilder::willBeAvailable('symfony/mercure-notifier', NotifierBridge\Mercure\MercureTransportFactory::class, $parentPackages) && ContainerBuilder::willBeAvailable('symfony/mercure-bundle', MercureBundle::class, $parentPackages) && \in_array(MercureBundle::class, $container->getParameter('kernel.bundles'), true)) {
             $container->getDefinition($classToServices[NotifierBridge\Mercure\MercureTransportFactory::class])
-                ->replaceArgument('$registry', new Reference(HubRegistry::class))
-                ->replaceArgument('$client', new Reference('http_client', ContainerBuilder::NULL_ON_INVALID_REFERENCE))
-                ->replaceArgument('$dispatcher', new Reference('event_dispatcher', ContainerBuilder::NULL_ON_INVALID_REFERENCE));
+                ->replaceArgument('$registry', new Reference(HubRegistry::class));
         } elseif (ContainerBuilder::willBeAvailable('symfony/mercure-notifier', NotifierBridge\Mercure\MercureTransportFactory::class, $parentPackages)) {
             $container->removeDefinition($classToServices[NotifierBridge\Mercure\MercureTransportFactory::class]);
         }
@@ -2821,17 +2807,13 @@ class FrameworkExtension extends Extension
         if (ContainerBuilder::willBeAvailable('symfony/fake-chat-notifier', NotifierBridge\FakeChat\FakeChatTransportFactory::class, ['symfony/framework-bundle', 'symfony/notifier', 'symfony/mailer'])) {
             $container->getDefinition($classToServices[NotifierBridge\FakeChat\FakeChatTransportFactory::class])
                 ->replaceArgument('$mailer', new Reference('mailer'))
-                ->replaceArgument('$logger', new Reference('logger'))
-                ->replaceArgument('$client', new Reference('http_client', ContainerBuilder::NULL_ON_INVALID_REFERENCE))
-                ->replaceArgument('$dispatcher', new Reference('event_dispatcher', ContainerBuilder::NULL_ON_INVALID_REFERENCE));
+                ->replaceArgument('$logger', new Reference('logger'));
         }
 
         if (ContainerBuilder::willBeAvailable('symfony/fake-sms-notifier', NotifierBridge\FakeSms\FakeSmsTransportFactory::class, ['symfony/framework-bundle', 'symfony/notifier', 'symfony/mailer'])) {
             $container->getDefinition($classToServices[NotifierBridge\FakeSms\FakeSmsTransportFactory::class])
                 ->replaceArgument('$mailer', new Reference('mailer'))
-                ->replaceArgument('$logger', new Reference('logger'))
-                ->replaceArgument('$client', new Reference('http_client', ContainerBuilder::NULL_ON_INVALID_REFERENCE))
-                ->replaceArgument('$dispatcher', new Reference('event_dispatcher', ContainerBuilder::NULL_ON_INVALID_REFERENCE));
+                ->replaceArgument('$logger', new Reference('logger'));
         }
 
         if (isset($config['admin_recipients'])) {
@@ -2845,18 +2827,6 @@ class FrameworkExtension extends Extension
 
         if ($webhookEnabled) {
             $loader->load('notifier_webhook.php');
-
-            $webhookRequestParsers = [
-                NotifierBridge\Twilio\Webhook\TwilioRequestParser::class => 'notifier.webhook.request_parser.twilio',
-            ];
-
-            foreach ($webhookRequestParsers as $class => $service) {
-                $package = substr($service, \strlen('notifier.webhook.request_parser.'));
-
-                if (!ContainerBuilder::willBeAvailable(sprintf('symfony/%s-notifier', $package), $class, ['symfony/framework-bundle', 'symfony/notifier'])) {
-                    $container->removeDefinition($service);
-                }
-            }
         }
     }
 

@@ -271,10 +271,10 @@ class Hydrator
             $name = $property->name;
 
             if (\ReflectionProperty::IS_PRIVATE & $flags) {
-                $propertyScopes["\0$class\0$name"] = $propertyScopes[$name] = [$class, $name, $flags & \ReflectionProperty::IS_READONLY ? $class : null, $property];
+                $propertyScopes["\0$class\0$name"] = $propertyScopes[$name] = [$class, $name, $flags & \ReflectionProperty::IS_READONLY ? $class : null];
                 continue;
             }
-            $propertyScopes[$name] = [$class, $name, $flags & \ReflectionProperty::IS_READONLY ? $property->class : null, $property];
+            $propertyScopes[$name] = [$class, $name, $flags & \ReflectionProperty::IS_READONLY ? $property->class : null];
 
             if (\ReflectionProperty::IS_PROTECTED & $flags) {
                 $propertyScopes["\0*\0$name"] = $propertyScopes[$name];
@@ -288,8 +288,8 @@ class Hydrator
                 if (!$property->isStatic()) {
                     $name = $property->name;
                     $readonlyScope = $property->isReadOnly() ? $class : null;
-                    $propertyScopes["\0$class\0$name"] = [$class, $name, $readonlyScope, $property];
-                    $propertyScopes[$name] ??= [$class, $name, $readonlyScope, $property];
+                    $propertyScopes["\0$class\0$name"] = [$class, $name, $readonlyScope];
+                    $propertyScopes[$name] ??= [$class, $name, $readonlyScope];
                 }
             }
         }

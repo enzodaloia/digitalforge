@@ -25,7 +25,7 @@ use Symfony\Component\Process\Process;
  */
 final class Dotenv
 {
-    public const VARNAME_REGEX = '(?i:_?[A-Z][A-Z0-9_]*+)';
+    public const VARNAME_REGEX = '(?i:[A-Z][A-Z0-9_]*+)';
     public const STATE_VARNAME = 0;
     public const STATE_VALUE = 1;
 
@@ -89,11 +89,10 @@ final class Dotenv
      * .env.local is always ignored in test env because tests should produce the same results for everyone.
      * .env.dist is loaded when it exists and .env is not found.
      *
-     * @param string      $path                 A file to load
-     * @param string|null $envKey               The name of the env vars that defines the app env
-     * @param string      $defaultEnv           The app env to use when none is defined
-     * @param array       $testEnvs             A list of app envs for which .env.local should be ignored
-     * @param bool        $overrideExistingVars Whether existing environment variables set by the system should be overridden
+     * @param string      $path       A file to load
+     * @param string|null $envKey     The name of the env vars that defines the app env
+     * @param string      $defaultEnv The app env to use when none is defined
+     * @param array       $testEnvs   A list of app envs for which .env.local should be ignored
      *
      * @throws FormatException when a file has a syntax error
      * @throws PathException   when a file does not exist or is not readable
@@ -174,7 +173,7 @@ final class Dotenv
      * Sets values as environment variables (via putenv, $_ENV, and $_SERVER).
      *
      * @param array $values               An array of env variables
-     * @param bool  $overrideExistingVars Whether existing environment variables set by the system should be overridden
+     * @param bool  $overrideExistingVars true when existing environment variables must be overridden
      */
     public function populate(array $values, bool $overrideExistingVars = false): void
     {
@@ -341,8 +340,8 @@ final class Dotenv
                 ++$this->cursor;
                 $value = str_replace(['\\"', '\r', '\n'], ['"', "\r", "\n"], $value);
                 $resolvedValue = $value;
-                $resolvedValue = $this->resolveCommands($resolvedValue, $loadedVars);
                 $resolvedValue = $this->resolveVariables($resolvedValue, $loadedVars);
+                $resolvedValue = $this->resolveCommands($resolvedValue, $loadedVars);
                 $resolvedValue = str_replace('\\\\', '\\', $resolvedValue);
                 $v .= $resolvedValue;
             } else {
@@ -364,8 +363,8 @@ final class Dotenv
                 }
                 $value = rtrim($value);
                 $resolvedValue = $value;
-                $resolvedValue = $this->resolveCommands($resolvedValue, $loadedVars);
                 $resolvedValue = $this->resolveVariables($resolvedValue, $loadedVars);
+                $resolvedValue = $this->resolveCommands($resolvedValue, $loadedVars);
                 $resolvedValue = str_replace('\\\\', '\\', $resolvedValue);
 
                 if ($resolvedValue === $value && preg_match('/\s+/', $value)) {

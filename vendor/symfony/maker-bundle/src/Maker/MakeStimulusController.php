@@ -37,7 +37,7 @@ final class MakeStimulusController extends AbstractMaker
 
     public static function getCommandDescription(): string
     {
-        return 'Create a new Stimulus controller';
+        return 'Creates a new Stimulus controller';
     }
 
     public function configureCommand(Command $command, InputConfiguration $inputConfig): void

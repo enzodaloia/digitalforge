@@ -52,8 +52,6 @@ use Symfony\Thanks\Thanks;
  */
 class Flex implements PluginInterface, EventSubscriberInterface
 {
-    public static $storedOperations = [];
-
     /**
      * @var Composer
      */
@@ -112,13 +110,6 @@ class Flex implements PluginInterface, EventSubscriberInterface
         $this->io = $io;
         $this->config = $composer->getConfig();
         $this->options = $this->initOptions();
-
-        // if Flex is being upgraded, the original operations from the original Flex
-        // instance are stored in the static property, so we can reuse them now.
-        if (property_exists(self::class, 'storedOperations') && self::$storedOperations) {
-            $this->operations = self::$storedOperations;
-            self::$storedOperations = [];
-        }
 
         $symfonyRequire = preg_replace('/\.x$/', '.x-dev', getenv('SYMFONY_REQUIRE') ?: ($composer->getPackage()->getExtra()['symfony']['require'] ?? ''));
 
@@ -210,8 +201,6 @@ class Flex implements PluginInterface, EventSubscriberInterface
      */
     public function deactivate(Composer $composer, IOInterface $io)
     {
-        // store operations in case Flex is being upgraded
-        self::$storedOperations = $this->operations;
         self::$activated = false;
     }
 
@@ -502,7 +491,7 @@ class Flex implements PluginInterface, EventSubscriberInterface
         $vendorDir = trim((new Filesystem())->makePathRelative($this->config->get('vendor-dir'), $rootDir), '/');
 
         $executor = new ScriptExecutor($this->composer, $this->io, $this->options);
-        $synchronizer = new PackageJsonSynchronizer($rootDir, $vendorDir, $executor, $this->io);
+        $synchronizer = new PackageJsonSynchronizer($rootDir, $vendorDir, $executor);
 
         if ($synchronizer->shouldSynchronize()) {
             $lockData = $this->composer->getLocker()->getLockData();
@@ -814,9 +803,6 @@ class Flex implements PluginInterface, EventSubscriberInterface
             $composer->getEventDispatcher(),
             $composer->getAutoloadGenerator()
         );
-        if (method_exists($installer, 'setPlatformRequirementFilter')) {
-            $installer->setPlatformRequirementFilter(((array) $this->installer)["\0*\0platformRequirementFilter"]);
-        }
 
         if (!$update) {
             $installer->setUpdateAllowList(['php']);

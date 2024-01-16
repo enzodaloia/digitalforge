@@ -39,7 +39,7 @@
         ]
     },
     "symfony/flex": {
-        "version": "2.4",
+        "version": "2.3",
         "recipe": {
             "repo": "github.com/symfony/recipes",
             "branch": "main",
@@ -69,20 +69,8 @@
             "src/Kernel.php"
         ]
     },
-    "symfony/mailer": {
-        "version": "6.3",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "4.3",
-            "ref": "2bf89438209656b85b9a49238c4467bff1b1f939"
-        },
-        "files": [
-            "config/packages/mailer.yaml"
-        ]
-    },
     "symfony/maker-bundle": {
-        "version": "1.52",
+        "version": "1.51",
         "recipe": {
             "repo": "github.com/symfony/recipes",
             "branch": "main",
@@ -91,7 +79,7 @@
         }
     },
     "symfony/monolog-bundle": {
-        "version": "3.10",
+        "version": "3.8",
         "recipe": {
             "repo": "github.com/symfony/recipes",
             "branch": "main",
@@ -169,6 +157,6 @@
         ]
     },
     "twig/extra-bundle": {
-        "version": "v3.8.0"
+        "version": "v3.7.1"
     }
 }
